@@ -1,0 +1,15 @@
+root = true
+
+# Unix-style newlines with a newline ending ps1 file
+[*.ps1]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+
+# Ignore paths
+[*.{txt}]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+indent_style = unset
+indent_size = unset
