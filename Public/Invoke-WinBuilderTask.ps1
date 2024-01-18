@@ -101,6 +101,8 @@ function Invoke-WinBuilderTask {
                 $PackagePath = "$env:WinPERoot\$($content.Architecture)\WinPE_OCs\$_.cab"
                 Add-WimPackage -Path $MountPath -PackagePath $PackagePath
             }
+
+            Repair-WindowsImage -Path $MountPath -StartComponentCleanup -ResetBase | Out-Null
         }
         catch {
             Write-Log -Level ERROR $_
@@ -166,6 +168,8 @@ function Invoke-WinBuilderTask {
             $content.Packages | ForEach-Object {
                 Dism /Image=$MountPath /Add-ProvisioningPackage /PackagePath:"$PackageRoot\$_"
             }
+
+            Repair-WindowsImage -Path $MountPath -StartComponentCleanup -ResetBase | Out-Null
         }
         catch {
             Write-Log -Level ERROR $_
