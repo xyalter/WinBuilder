@@ -81,6 +81,7 @@ function Invoke-WinBuilderTask {
             Write-Log -Level INFO "Mount Image..."
             Mount-WindowsImage -Path $MountPath -ImagePath $_.ImagePath -Index $_.ImageIndex | Out-Null
             Write-Log -Level INFO "Mounted Image: $MountPath"
+            # Get-WindowsPackage -Path $MountPath
 
             #======================================================================================
             #   Add-Drivers
@@ -98,9 +99,19 @@ function Invoke-WinBuilderTask {
             #   Add-Packages
             #======================================================================================
             $content.BootPackages | ForEach-Object {
-                $PackagePath = "$env:WinPERoot\$($content.Architecture)\WinPE_OCs\$_.cab"
-                Add-WimPackage -Path $MountPath -PackagePath $PackagePath
+                if ($_.EndsWith(".msu") -or $_.EndsWith(".cab")) {
+                    $PackagePath = "$PackageRoot\$_"
+                    Add-WimPackage -Path $MountPath -PackagePath $PackagePath
+                    # Repair-WindowsImage -Path $MountPath -StartComponentCleanup -ResetBase | Out-Null
+                    # Get-WindowsPackage -Path $MountPath
+                }
+                else {
+                    $PackagePath = "$env:WinPERoot\$($content.Architecture)\WinPE_OCs\$_.cab"
+                    Add-WimPackage -Path $MountPath -PackagePath $PackagePath
+                }
             }
+
+            Repair-WindowsImage -Path $MountPath -StartComponentCleanup -ResetBase | Out-Null
         }
         catch {
             Write-Log -Level ERROR $_
@@ -166,6 +177,8 @@ function Invoke-WinBuilderTask {
             $content.Packages | ForEach-Object {
                 Dism /Image=$MountPath /Add-ProvisioningPackage /PackagePath:"$PackageRoot\$_"
             }
+
+            Repair-WindowsImage -Path $MountPath -StartComponentCleanup -ResetBase | Out-Null
         }
         catch {
             Write-Log -Level ERROR $_

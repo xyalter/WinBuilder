@@ -1,17 +1,18 @@
 function Invoke-SPTask {
-    [CmdletBinding(DefaultParameterSetName = "TaskName")]
+    [CmdletBinding()]
     Param (
-        [Parameter(ParameterSetName = "TaskName", Mandatory = $true, Position = 0)]
-        [string]$TaskName,
-        [Parameter(ParameterSetName = "TaskPath", Mandatory = $true, Position = 0)]
-        [string]$TaskPath
+        [Parameter(Mandatory)]
+        [string]$Path
     )
 
-    $chosen = $PSCmdlet.ParameterSetName
-    if ($chosen -eq "TaskName") {
-        $TaskPath = "$ProjectRoot\tasks\$TaskName.json"
-    }
-    $content = Get-Content $TaskPath | ConvertFrom-Json
+    $InformationPreference = "Continue"
+    if (!(Test-Admin)) { throw "Administrator rights are required!" }
+    if (!(Test-Path $Path)) { throw "Task file not found!" }
+
+    $ProjectRoot = (Get-Item -Path $Path).Directory.Parent.FullName
+    $DriverRoot = $ProjectRoot + '\drivers'
+
+    $content = Get-Content $Path | ConvertFrom-Json
 
     $TempDirectory = "$ProjectRoot\build\$(Get-Random)"
     if (!(Test-Path $TempDirectory)) { New-Item -Path "$TempDirectory" -ItemType Directory -Force | Out-Null }
@@ -30,18 +31,36 @@ function Invoke-SPTask {
     #======================================================================================
     #	Edit-SPImage
     #======================================================================================
-    Mount-WindowsImage -Path $MountPath -ImagePath $ImagePath -Index $ImageIndex | Out-Null
+    try {
+        Write-Information "Mount Image..."
+        Mount-WindowsImage -Path $MountPath -ImagePath $ImagePath -Index $ImageIndex | Out-Null
+        Write-Information "Mounted Image: $MountPath"
 
-    Dism.exe /Image:$MountPath /Add-Driver /Driver:"$ProjectRoot\drivers\dell\serial\Win10" /Recurse
-    # $content.Drivers | ForEach-Object {
-    #     if ($_.EndsWith(".json")) {
-    #         Add-WimDriver -Path $MountPath -JsonPath "$DriverRoot\$_"
-    #     }
-    #     else {
-    #         Add-WimDriver -Path $MountPath -DriverPath "$DriverRoot\$_"
-    #     }
-    # }
-    Dismount-WindowsImage -Path $MountPath -Save | Out-Null
+        #======================================================================================
+        #   Add-Drivers
+        #======================================================================================
+        $content.Drivers | ForEach-Object {
+            if ($_.EndsWith(".json")) {
+                Add-WimDriver -Path $MountPath -JsonPath "$DriverRoot\$_"
+            }
+            else {
+                Add-WimDriver -Path $MountPath -DriverPath "$DriverRoot\$_"
+            }
+        }
+
+        Repair-WindowsImage -Path $MountPath -StartComponentCleanup -ResetBase | Out-Null
+
+        # Dism.exe /Image:$MountPath /Add-Driver /Driver:"$ProjectRoot\drivers\dell\serial\Win10" /Recurse
+    }
+    catch {
+        Write-Error $_
+        throw $_
+    }
+    finally {
+        Write-Information "Dismount Image..."
+        Dismount-WindowsImage -Path $MountPath -Save | Out-Null
+        Write-Information "Dismounted Image: $MountPath"
+    }
 
     # Clean-Image
     $TempImagePath = "$TempDirectory\$(Get-Random).wim"
