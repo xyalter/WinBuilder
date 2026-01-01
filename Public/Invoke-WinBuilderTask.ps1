@@ -174,8 +174,14 @@ function Invoke-WinBuilderTask {
             #======================================================================================
             #   Add-Packages
             #======================================================================================
+            $ProvisioningPackagesPath = "$MountPath\Windows\Provisioning\Packages"
+            if (!(Test-Path $ProvisioningPackagesPath)) {
+                New-Item -Path $ProvisioningPackagesPath -ItemType Directory -Force | Out-Null
+            }
             $content.Packages | ForEach-Object {
-                Dism /Image=$MountPath /Add-ProvisioningPackage /PackagePath:"$PackageRoot\$_"
+                # Dism /Image=$MountPath /Add-ProvisioningPackage /PackagePath:"$PackageRoot\$_"
+                Copy-Item -Path "$PackageRoot\$_" -Destination $ProvisioningPackagesPath -Force
+                Write-Information "Copied ProvisioningPackage: $_"
             }
 
             Repair-WindowsImage -Path $MountPath -StartComponentCleanup -ResetBase | Out-Null
