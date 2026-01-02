@@ -7,11 +7,11 @@ function Remove-WimAppxPackage {
         [string]$PackageName
     )
 
-    Get-AppxProvisionedPackage -Path $Path | Where-Object { 
+    Get-AppxProvisionedPackage -Path $Path | Where-Object {
         $_.PackageName.startsWith($PackageName)
     } | ForEach-Object {
-        Write-Log -Level INFO "Removing Appx: $($_.PackageName)"
+        Write-PSFMessage -Level Output -Message "Removing Appx: $($_.PackageName)"
         Remove-AppxProvisionedPackage -Path $Path -PackageName $_.PackageName | Out-Null
-        Write-Log -Level INFO "Removed Appx: $($_.PackageName)"
+        Write-PSFMessage -Level Output -Message "Removed Appx: $($_.PackageName)"
     }
 }

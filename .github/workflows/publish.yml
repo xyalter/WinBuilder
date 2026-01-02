@@ -20,7 +20,7 @@ jobs:
         shell: pwsh
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Logging -ErrorAction Stop
+          Install-Module PSFramework -ErrorAction Stop
       - name: Build and publish
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}

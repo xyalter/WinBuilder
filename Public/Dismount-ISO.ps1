@@ -1,7 +1,7 @@
 function Dismount-ISO([string]$Path) {
     if ((Get-DiskImage -ImagePath $Path).Attached) {
-        Write-Log -Level INFO "Dismount ISO..."
+        Write-PSFMessage -Level Output -Message "Dismount ISO..."
         Dismount-DiskImage -ImagePath $Path
-        Write-Log -Level INFO "Dismounted ISO: $Path"
+        Write-PSFMessage -Level Output -Message "Dismounted ISO: $Path"
     }
 }

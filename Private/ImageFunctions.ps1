@@ -33,9 +33,9 @@ function Export-Image {
         }
     }
     else {
-        Write-Log -Level INFO "Export Image..."
+        Write-PSFMessage -Level Output -Message "Export Image..."
         Export-WindowsImage -SourceImagePath $SourceImagePath -SourceIndex $SourceIndex `
             -DestinationImagePath $DestinationImagePath -CompressionType max | Out-Null
-        Write-Log -Level INFO "Exported Image: $SourceImagePath $SourceIndex"
+        Write-PSFMessage -Level Output -Message "Exported Image: $SourceImagePath $SourceIndex"
     }
 }

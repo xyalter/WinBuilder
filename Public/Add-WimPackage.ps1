@@ -7,8 +7,8 @@ function Add-WimPackage {
         [string]$PackagePath
     )
 
-    Write-Log -Level INFO "Adding Package: $PackagePath"
-    Write-Log -Level DEBUG "PackagePath: $PackagePath"
+    Write-PSFMessage -Level Output -Message "Adding Package: $PackagePath"
+    Write-PSFMessage -Message "PackagePath: $PackagePath"
     Add-WindowsPackage -Path $Path -PackagePath $PackagePath | Out-Null
-    Write-Log -Level INFO "Added Package: $PackagePath"
+    Write-PSFMessage -Level Output -Message "Added Package: $PackagePath"
 }

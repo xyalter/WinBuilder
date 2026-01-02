@@ -17,21 +17,21 @@ function Dismount-OfflineRegistry {
 
         $RegPaths | ForEach-Object {
             if (Test-Path -Path $_) {
-                Write-Log -Level INFO "Unloading Registry $($_ -replace ':')"
+                Write-PSFMessage -Level Output -Message "Unloading Registry $($_ -replace ':')"
                 Start-Process reg -ArgumentList "unload $($_ -replace ':')" -Wait -WindowStyle Hidden -ErrorAction SilentlyContinue
             }
         }
 
         $RegPaths | ForEach-Object {
             if (Test-Path -Path $_) {
-                Write-Log -Level WARNNING "Unloading Registry $($_ -replace ':')  (Second Attempt)"
+                Write-PSFMessage -Level Warning -Message "Unloading Registry $($_ -replace ':')  (Second Attempt)"
                 Start-Process reg -ArgumentList "unload $($_ -replace ':')" -Wait -WindowStyle Hidden -ErrorAction SilentlyContinue
             }
         }
 
         $RegPaths | ForEach-Object {
             if (Test-Path -Path $_) {
-                Write-Log -Level WARNNING "$_ could not be dismounted.  Open Regedit and unload the Hive manually"
+                Write-PSFMessage -Level Warning -Message "$_ could not be dismounted.  Open Regedit and unload the Hive manually"
                 Pause
             }
         }

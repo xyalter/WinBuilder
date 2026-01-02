@@ -5,7 +5,7 @@ function Invoke-WinBuilderTask {
         [string]$Path
     )
 
-    Add-LoggingTarget -Name Console -Configuration @{Level = 'DEBUG' }
+    # PSFramework logging is initialized in WinBuilder.psm1
     Set-DandIEnv
     if (!(Test-Admin)) { throw "Administrator rights are required!" }
     if (!(Test-Path $Path)) { throw "Task file not found!" }
@@ -19,6 +19,11 @@ function Invoke-WinBuilderTask {
 
     $TempDirectory = "$ProjectRoot\build\$(Get-Random)"
     if (!(Test-Path $TempDirectory)) { New-Item -Path "$TempDirectory" -ItemType Directory -Force | Out-Null }
+
+    # Configure file logging to build directory
+    $LogFileName = "WinBuilder_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+    $LogFilePath = Join-Path $TempDirectory $LogFileName
+    Set-PSFLoggingProvider -Name logfile -InstanceName WinBuilderFile -FilePath $LogFilePath -Enabled $true
 
     #======================================================================================
     #   Import-Image
@@ -52,7 +57,7 @@ function Invoke-WinBuilderTask {
         }
     }
     catch {
-        Write-Log -Level ERROR $_
+        Write-PSFMessage -Level Warning -Message $_ -ErrorRecord $_
         throw $_
     }
     finally {
@@ -70,17 +75,17 @@ function Invoke-WinBuilderTask {
     Get-WindowsImage -ImagePath $ImagePath | ForEach-Object {
         $WimImageInfo = $_ | Select-Object -Property *
         $WimImageArchitecture = $WimImageInfo.Architecture
-        Write-Log -Level DEBUG "WimImageInfo: $($_.Architecture)"
-        Write-Log -Level DEBUG "WimImageInfo: $WimImageInfo"
-        Write-Log -Level DEBUG "Architecture: $WimImageArchitecture"
+        Write-PSFMessage -Message "WimImageInfo: $($_.Architecture)"
+        Write-PSFMessage -Message "WimImageInfo: $WimImageInfo"
+        Write-PSFMessage -Message "Architecture: $WimImageArchitecture"
         if ($WimImageArchitecture -eq '0') { $WimImageArchitecture = 'x86' }
         if ($WimImageArchitecture -eq '6') { $WimImageArchitecture = 'ia64' }
         if ($WimImageArchitecture -eq '9') { $WimImageArchitecture = 'x64' }
         if ($WimImageArchitecture -eq '12') { $WimImageArchitecture = 'x64 ARM' }
         try {
-            Write-Log -Level INFO "Mount Image..."
+            Write-PSFMessage -Level Output -Message "Mount Image..."
             Mount-WindowsImage -Path $MountPath -ImagePath $_.ImagePath -Index $_.ImageIndex | Out-Null
-            Write-Log -Level INFO "Mounted Image: $MountPath"
+            Write-PSFMessage -Level Output -Message "Mounted Image: $MountPath"
             # Get-WindowsPackage -Path $MountPath
 
             #======================================================================================
@@ -114,13 +119,13 @@ function Invoke-WinBuilderTask {
             Repair-WindowsImage -Path $MountPath -StartComponentCleanup -ResetBase | Out-Null
         }
         catch {
-            Write-Log -Level ERROR $_
+            Write-PSFMessage -Level Warning -Message $_ -ErrorRecord $_
             throw $_
         }
         finally {
-            Write-Log -Level INFO "Dismount Image..."
+            Write-PSFMessage -Level Output -Message "Dismount Image..."
             Dismount-WindowsImage -Path $MountPath -Save | Out-Null
-            Write-Log -Level INFO "Dismounted Image: $MountPath"
+            Write-PSFMessage -Level Output -Message "Dismounted Image: $MountPath"
         }
     }
     $TempImagePath = "$TempDirectory\$(Get-Random).wim"
@@ -140,9 +145,9 @@ function Invoke-WinBuilderTask {
             #======================================================================================
             #   Mount-MainImage
             #======================================================================================
-            Write-Log -Level INFO "Mount Image..."
+            Write-PSFMessage -Level Output -Message "Mount Image..."
             Mount-WindowsImage -Path $MountPath -ImagePath $_.ImagePath -Index $_.ImageIndex | Out-Null
-            Write-Log -Level INFO "Mounted Image: $MountPath"
+            Write-PSFMessage -Level Output -Message "Mounted Image: $MountPath"
 
             #======================================================================================
             #   Add-Drivers
@@ -181,13 +186,13 @@ function Invoke-WinBuilderTask {
             $content.Packages | ForEach-Object {
                 # Dism /Image=$MountPath /Add-ProvisioningPackage /PackagePath:"$PackageRoot\$_"
                 Copy-Item -Path "$PackageRoot\$_" -Destination $ProvisioningPackagesPath -Force
-                Write-Information "Copied ProvisioningPackage: $_"
+                Write-PSFMessage -Message "Copied ProvisioningPackage: $_"
             }
 
             Repair-WindowsImage -Path $MountPath -StartComponentCleanup -ResetBase | Out-Null
         }
         catch {
-            Write-Log -Level ERROR $_
+            Write-PSFMessage -Level Warning -Message $_ -ErrorRecord $_
             throw $_
         }
         finally {
@@ -195,9 +200,9 @@ function Invoke-WinBuilderTask {
             #   Save-Image
             #======================================================================================
             # cmd /c pause
-            Write-Log -Level INFO "Dismount Image..."
+            Write-PSFMessage -Level Output -Message "Dismount Image..."
             Dismount-WindowsImage -Path $MountPath -Save | Out-Null
-            Write-Log -Level INFO "Dismounted Image: $MountPath"
+            Write-PSFMessage -Level Output -Message "Dismounted Image: $MountPath"
         }
     }
 

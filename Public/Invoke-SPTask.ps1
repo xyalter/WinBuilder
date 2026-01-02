@@ -32,9 +32,9 @@ function Invoke-SPTask {
     #	Edit-SPImage
     #======================================================================================
     try {
-        Write-Information "Mount Image..."
+        Write-PSFMessage -Level Output -Message "Mount Image..."
         Mount-WindowsImage -Path $MountPath -ImagePath $ImagePath -Index $ImageIndex | Out-Null
-        Write-Information "Mounted Image: $MountPath"
+        Write-PSFMessage -Level Output -Message "Mounted Image: $MountPath"
 
         #======================================================================================
         #   Add-Drivers
@@ -53,13 +53,13 @@ function Invoke-SPTask {
         # Dism.exe /Image:$MountPath /Add-Driver /Driver:"$ProjectRoot\drivers\dell\serial\Win10" /Recurse
     }
     catch {
-        Write-Error $_
+        Write-PSFMessage -Level Warning -Message "Failed to process image: $_" -ErrorRecord $_
         throw $_
     }
     finally {
-        Write-Information "Dismount Image..."
+        Write-PSFMessage -Level Output -Message "Dismount Image..."
         Dismount-WindowsImage -Path $MountPath -Save | Out-Null
-        Write-Information "Dismounted Image: $MountPath"
+        Write-PSFMessage -Level Output -Message "Dismounted Image: $MountPath"
     }
 
     # Clean-Image

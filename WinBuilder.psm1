@@ -3,6 +3,17 @@
 #   https://github.com/RamblingCookieMonster/PSStackExchange/blob/master/PSStackExchange/PSStackExchange.psm1
 #===================================================================================================
 
+#===================================================================================================
+#   Initialize PSFramework Logging
+#===================================================================================================
+# Import PSFramework if not already loaded
+if (-not (Get-Module -Name PSFramework)) {
+    Import-Module PSFramework -ErrorAction Stop
+}
+
+# Configure and enable console logging provider
+Set-PSFLoggingProvider -Name console -InstanceName WinBuilderConsole -Enabled $true
+
 # Get public and private function definition files.
 $PublicFunctions  = @( Get-ChildItem -Path $PSScriptRoot\Public\*.ps1 -ErrorAction SilentlyContinue )
 $PrivateFunctions = @( Get-ChildItem -Path $PSScriptRoot\Private\*.ps1 -ErrorAction SilentlyContinue )
@@ -13,7 +24,7 @@ foreach ($Import in @($PublicFunctions + $PrivateFunctions)) {
         . $Import.FullName
     }
     Catch {
-        Write-Error -Message "Failed to import function $($Import.FullName): $_"
+        Write-PSFMessage -Level Warning -Message "Failed to import function $($Import.FullName): $_" -ErrorRecord $_
     }
 }
 

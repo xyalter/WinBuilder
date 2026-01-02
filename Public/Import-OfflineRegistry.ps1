@@ -40,13 +40,13 @@ function Import-OfflineRegistry {
         }
 
         # Write-Information "Import Reg: $ImportFile"
-        Write-Log -Level INFO "Import Reg: $ImportFile"
-        $ShowRegContent = $true
-        if ($ShowRegContent.IsPresent) {
+        Write-PSFMessage -Level Output -Message "Import Reg: $ImportFile"
+        $ShowRegContent = $false
+        if ($ShowRegContent) {
             $TempContent = @()
             $TempContent = Get-Content -Path $ImportFile
             foreach ($Line in $TempContent) {
-                Write-Log -Level INFO "$Line" -ForegroundColor Gray
+                Write-PSFMessage -Level Debug -Message "$Line"
             }
         }
         Start-Process reg -ArgumentList ('import', "`"$ImportFile`"") -Wait -WindowStyle Hidden -ErrorAction SilentlyContinue
